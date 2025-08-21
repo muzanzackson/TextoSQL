@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL Query Generator & Executor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            width: 100%;
+            max-width: 1000px;
+            backdrop-filter: blur(10px);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            color: #2d3748;
+            font-size: 2.5rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #718096;
+            font-size: 1.1rem;
+            font-weight: 300;
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        .input-label {
+            display: block;
+            color: #4a5568;
+            font-size: 0.95rem;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 16px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s ease;
+            resize: vertical;
+            min-height: 120px;
+            background: #f8fafc;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .generate-btn {
+            width: 100%;
+            margin-bottom: 30px;
+        }
+
+        .execute-btn {
+            background: linear-gradient(135deg, #38a169 0%, #2f855a 100%);
+            margin-top: 15px;
+            width: 100%;
+        }
+
+        .execute-btn:hover {
+            box-shadow: 0 10px 30px rgba(56, 161, 105, 0.3);
+        }
+
+        .output-section {
+            margin-top: 30px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease;
+        }
+
+        .output-section.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .output-label {
+            display: block;
+            color: #4a5568;
+            font-size: 0.95rem;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .sql-output {
+            width: 100%;
+            padding: 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            background: #1a202c;
+            color: #e2e8f0;
+            min-height: 150px;
+            resize: vertical;
+            transition: all 0.3s ease;
+        }
+
+        .sql-output:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .results-section {
+            margin-top: 30px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease;
+        }
+
+        .results-section.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-top: 15px;
+        }
+
+        .results-table th {
+            background: #4a5568;
+            color: white;
+            padding: 16px;
+            text-align: left;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .results-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 0.9rem;
+        }
+
+        .results-table tr:hover {
+            background: #f8fafc;
+        }
+
+        .results-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .results-info {
+            background: #edf2f7;
+            padding: 12px 16px;
+            border-radius: 8px;
+            color: #4a5568;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+
+        .success-message {
+            color: #38a169;
+            background: #c6f6d5;
+            padding: 16px;
+            border-radius: 12px;
+            margin-top: 20px;
+            border: 1px solid #9ae6b4;
+        }
+
+        .error {
+            color: #e53e3e;
+            background: #fed7d7;
+            padding: 16px;
+            border-radius: 12px;
+            margin-top: 20px;
+            border: 1px solid #feb2b2;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ffffff40;
+            border-top: 2px solid #ffffff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .table-container {
+            max-height: 400px;
+            overflow-y: auto;
+            border-radius: 12px;
+        }
+
+        .table-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .table-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .table-container::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+
+        .table-container::-webkit-scrollbar-thumb:hover {
+            background: #a1a1a1;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 24px;
+                margin: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .results-table {
+                font-size: 0.8rem;
+            }
+
+            .results-table th,
+            .results-table td {
+                padding: 8px 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>SQL Query Generator & Executor</h1>
+            <p>Describe what you want in natural language, generate SQL, and execute on Azure SQL</p>
+        </div>
+
+        <div class="input-section">
+            <label for="userInput" class="input-label">Describe your query</label>
+            <textarea 
+                id="userInput" 
+                class="input-field" 
+                placeholder="e.g., Get all customers who made orders in the last 30 days with their total order value"
+            ></textarea>
+        </div>
+
+        <button id="generateBtn" class="btn generate-btn">
+            Generate SQL Query
+        </button>
+
+        <div id="outputSection" class="output-section">
+            <label for="sqlOutput" class="output-label">Generated SQL Query</label>
+            <textarea id="sqlOutput" class="sql-output" placeholder="Your SQL query will appear here..."></textarea>
+            <button id="executeBtn" class="btn execute-btn">
+                Execute Query
+            </button>
+        </div>
+
+        <div id="resultsSection" class="results-section">
+            <label class="output-label">Query Results</label>
+            <div id="resultsContainer"></div>
+        </div>
+    </div>
+
+    <script>
+        const userInput = document.getElementById('userInput');
+        const generateBtn = document.getElementById('generateBtn');
+        const executeBtn = document.getElementById('executeBtn');
+        const outputSection = document.getElementById('outputSection');
+        const resultsSection = document.getElementById('resultsSection');
+        const sqlOutput = document.getElementById('sqlOutput');
+        const resultsContainer = document.getElementById('resultsContainer');
+
+        generateBtn.addEventListener('click', async () => {
+            const input = userInput.value.trim();
+            
+            if (!input) {
+                alert('Please enter a description for your query');
+                return;
+            }
+
+            // Show loading state
+            generateBtn.disabled = true;
+            generateBtn.innerHTML = '<span class="spinner"></span>Generating...';
+            sqlOutput.value = '';
+            resultsSection.classList.remove('show');
+            resultsContainer.innerHTML = '';
+            
+            // Show output section
+            outputSection.classList.add('show');
+
+            try {
+                const response = await fetch('/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ input: input })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    sqlOutput.value = data.sql_query;
+                } else {
+                    sqlOutput.value = `Error: ${data.error}`;
+                }
+            } catch (error) {
+                sqlOutput.value = `Error: Failed to generate query. Please try again.`;
+                console.error('Error:', error);
+            } finally {
+                // Reset button state
+                generateBtn.disabled = false;
+                generateBtn.innerHTML = 'Generate SQL Query';
+            }
+        });
+
+        executeBtn.addEventListener('click', async () => {
+            const query = sqlOutput.value.trim();
+            
+            if (!query) {
+                alert('Please generate a SQL query first');
+                return;
+            }
+
+            // Show loading state
+            executeBtn.disabled = true;
+            executeBtn.innerHTML = '<span class="spinner"></span>Executing...';
+            resultsContainer.innerHTML = '';
+
+            try {
+                const response = await fetch('/execute', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ sql_query: query })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    if (data.data && data.columns) {
+                        // Display table results
+                        displayTableResults(data);
+                    } else if (data.message) {
+                        // Display success message for non-SELECT queries
+                        resultsContainer.innerHTML = `
+                            <div class="success-message">
+                                ${data.message}
+                            </div>
+                        `;
+                    }
+                    resultsSection.classList.add('show');
+                } else {
+                    resultsContainer.innerHTML = `
+                        <div class="error">
+                            ${data.error}
+                        </div>
+                    `;
+                    resultsSection.classList.add('show');
+                }
+            } catch (error) {
+                resultsContainer.innerHTML = `
+                    <div class="error">
+                        Error: Failed to execute query. Please try again.
+                    </div>
+                `;
+                resultsSection.classList.add('show');
+                console.error('Error:', error);
+            } finally {
+                // Reset button state
+                executeBtn.disabled = false;
+                executeBtn.innerHTML = 'Execute Query';
+            }
+        });
+
+        function displayTableResults(data) {
+            const { columns, data: rows, row_count } = data;
+
+            let html = `
+                <div class="results-info">
+                    Query returned ${row_count} row(s)
+                </div>
+                <div class="table-container">
+                    <table class="results-table">
+                        <thead>
+                            <tr>
+            `;
+
+            // Add column headers
+            columns.forEach(column => {
+                html += `<th>${escapeHtml(column)}</th>`;
+            });
+
+            html += `
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            // Add data rows
+            rows.forEach(row => {
+                html += '<tr>';
+                columns.forEach(column => {
+                    const value = row[column];
+                    const displayValue = value === null ? 'NULL' : escapeHtml(String(value));
+                    html += `<td>${displayValue}</td>`;
+                });
+                html += '</tr>';
+            });
+
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            resultsContainer.innerHTML = html;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Allow Enter key to generate (with Ctrl/Cmd)
+        userInput.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                generateBtn.click();
+            }
+        });
+
+        // Auto-resize textarea
+        userInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.max(120, this.scrollHeight) + 'px';
+        });
+    </script>
+</body>
+</html>
